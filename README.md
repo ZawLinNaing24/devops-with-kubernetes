@@ -8,3 +8,4 @@
 
 - [Exercise 1.1](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/1.1)
 - [Exercise 1.2](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/1.2/chapter-2%20kubernetes-basics)
+- [Exercise 1.3](https://github.com/ZawLinNaing24/devops-with-kubernetes/releases/tag/1.3)
