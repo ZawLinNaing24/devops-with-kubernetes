@@ -14,7 +14,7 @@ func main() {
 	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Todo App v1.2")
+		fmt.Fprintf(w, "Todo App v1.5")
 	})
 
 	// Exercise 1.2 လိုအပ်ချက်: "Server started in port NNNN"
