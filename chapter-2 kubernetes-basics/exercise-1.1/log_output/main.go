@@ -25,6 +25,17 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(response))
 }
 
+var counter int = 0;
+func pingpongHandler(w http.ResponseWriter, r *http.Request) {
+	// Request လာတိုင်း pong <counter> ဟု တုံ့ပြန်ပြီး counter ကို ၁ တိုးမည်
+	response := fmt.Sprintf("pong %d\n", counter)
+	counter++
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(response))
+}
+
 func main (){
 
 	port := os.Getenv("PORT")

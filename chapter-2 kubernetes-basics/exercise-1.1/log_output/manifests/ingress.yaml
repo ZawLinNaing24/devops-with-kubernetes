@@ -14,3 +14,11 @@ spec:
                 name: log-output-svc
                 port:
                   number: 8080
+
+          - path: /pingpong
+            pathType: Prefix
+            backend: 
+              service: 
+                name: pingpong-svc
+                port: 
+                  number: 8080
