@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: hugonaing/todo-app:v1.5
+          image: hugonaing/to-do-app:1.8
           ports: 
             - containerPort: 3000
           env:
