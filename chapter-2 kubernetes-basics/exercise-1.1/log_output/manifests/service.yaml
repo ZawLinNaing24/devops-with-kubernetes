@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: log-output-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: log-output
+  ports:
+    - name: http
+      port: 8080           # Ingress က လှမ်းခေါ်မည့် Service Port
+      targetPort: 3000
