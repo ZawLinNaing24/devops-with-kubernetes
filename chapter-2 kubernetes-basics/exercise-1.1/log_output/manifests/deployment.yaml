@@ -12,8 +12,23 @@ spec:
       labels:
         app: log-output
     spec:
+      volumes: 
+        - name: log-storage
+          emptyDir: {}
       containers:
-        - name: log-output
-          image: hugonaing/dwk-ex-1.01:v2
-          ports:
+        - name: writer
+          image: hugonaing/log-writer:v1
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: log-storage
+              mountPath: /usr/src/app/files
+
+        - name: reader
+          image: hugonaing/log-reader:v1
+          imagePullPolicy: Always
+          volumeMounts: 
+            - name: log-storage
+              mountPath: /usr/src/app/files
+          ports: 
             - containerPort: 3000
+
