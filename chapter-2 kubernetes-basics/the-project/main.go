@@ -1,11 +1,77 @@
 package main
 
 import (
-	"fmt"
+"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	
+	"time"
 )
+const (
+	imageDir  = "/usr/src/app/files"
+	imagePath = "/usr/src/app/files/image.jpg"
+	imageURL  = "https://picsum.photos/1200"
+)
+
+
+func fetchAndCacheImage() error {
+	_ = os.MkdirAll(imageDir, 0755)
+
+	info, err := os.Stat(imagePath)
+
+	// ၁။ ဖိုင်ရှိပြီးသားဖြစ်ပြီး ၁၀ မိနစ် မပြည့်သေးပါက API ထပ်မခေါ်ဘဲ ရှိပြီးသားကို သုံးမည်
+	if err == nil {
+		if time.Since(info.ModTime()) < 10*time.Minute {
+			return nil
+		}
+	}
+
+	// ၂။ ဖိုင်မရှိသေးပါက (သို့) ၁၀ မိနစ်ကျော်သွားပါက Picsum မှ ပုံအသစ် ဒေါင်းလုဒ်ဆွဲမည်
+	log.Println("Fetching a new image from Lorem Picsum...")
+	resp, err := http.Get(imageURL)
+	if err != nil {
+		return fmt.Errorf("failed to fetch image: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// ၃။ ပုံကို PV Mount ထားသည့် File Path ထဲသို့ သွားသိမ်းမည်
+	out, err := os.Create(imagePath)
+	if err != nil {
+		return fmt.Errorf("failed to create image file: %w", err)
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, resp.Body)
+	return err
+}
+
+func imageHandler(w http.ResponseWriter, r *http.Request) {
+	err := fetchAndCacheImage()
+	if err != nil {
+		http.Error(w, "Could not load image", http.StatusInternalServerError)
+		return
+	}
+	// Image File ကို Client ဆီ ပြန်ပို့ပေးခြင်း
+	http.ServeFile(w, r, imagePath)
+}
+
+// Main HTML Page Handler (`/`)
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	html := `
+		<!DOCTYPE html>
+		<html>
+		<head><title>My Project</title></head>
+		<body>
+			<h1>Project Main Page</h1>
+			<img src="/image.jpg" alt="Hourly Random Image" style="max-width: 600px; height: auto;" />
+		</body>
+		</html>
+	`
+	w.Write([]byte(html))
+}
 
 func main() {
 	port := os.Getenv("PORT")
@@ -13,9 +79,12 @@ func main() {
 		port = "3000"
 	}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Todo App v1.5")
-	})
+	// http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	// 	fmt.Fprintf(w, "Todo App v1.5")
+	// })
+
+	http.HandleFunc("/image.jpg", imageHandler)
+	http.HandleFunc("/", indexHandler)
 
 	// Exercise 1.2 လိုအပ်ချက်: "Server started in port NNNN"
 	log.Printf("Server started in port %s\n", port)
