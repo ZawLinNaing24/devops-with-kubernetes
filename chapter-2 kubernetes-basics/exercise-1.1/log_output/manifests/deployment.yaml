@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: log-output-dep
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: log-output
@@ -13,21 +13,22 @@ spec:
         app: log-output
     spec:
       volumes: 
-        - name: log-storage
-          emptyDir: {}
+      - name: shared-storage
+        persistentVolumeClaim: 
+          claimName: shared-pv-claim
       containers:
         - name: writer
           image: hugonaing/log-writer:v1
           imagePullPolicy: Always
           volumeMounts:
-            - name: log-storage
+            - name: shared-storage
               mountPath: /usr/src/app/files
 
         - name: reader
-          image: hugonaing/log-reader:v1
+          image: hugonaing/log-reader:v2
           imagePullPolicy: Always
           volumeMounts: 
-            - name: log-storage
+            - name: shared-storage
               mountPath: /usr/src/app/files
           ports: 
             - containerPort: 3000
