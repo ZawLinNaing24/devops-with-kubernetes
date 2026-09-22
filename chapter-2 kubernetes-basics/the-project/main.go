@@ -63,10 +63,30 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	html := `
 		<!DOCTYPE html>
 		<html>
-		<head><title>My Project</title></head>
+		<head>
+			<meta charset="UTF-8">
+			<title>Todo App</title>
+			<style>
+				body { font-family: Arial, sans-serif; margin: 40px; max-width: 600px; }
+				img { width: 100%%; height: auto; border-radius: 8px; margin-bottom: 20px; }
+				input[type="text"] { width: 70%%; padding: 8px; font-size: 14px; }
+				button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+				ul { margin-top: 20px; line-height: 1.6; }
+			</style>
+		</head>
 		<body>
-			<h1>Project Main Page</h1>
+			<h1>Todo App</h1>
 			<img src="/image.jpg" alt="Hourly Random Image" style="max-width: 600px; height: auto;" />
+			<form action="/" method="POST">
+				<input type="text" name="todo" maxlength="140" placeholder="Enter a new todo (max 140 characters)..." required />
+				<button type="submit">Send</button>
+			</form>
+
+			<!-- Exercise 1.13: Hardcoded/Existing Todo List -->
+			<ul>
+				<li>Todo 1</li>
+				<li>Todo 2</li>
+   			</ul>
 		</body>
 		</html>
 	`
