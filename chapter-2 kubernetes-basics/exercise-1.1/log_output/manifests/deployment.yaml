@@ -14,8 +14,7 @@ spec:
     spec:
       volumes: 
       - name: shared-storage
-        persistentVolumeClaim: 
-          claimName: shared-pv-claim
+        emptyDir: {}
       containers:
         - name: writer
           image: hugonaing/log-writer:v1
@@ -25,7 +24,7 @@ spec:
               mountPath: /usr/src/app/files
 
         - name: reader
-          image: hugonaing/log-reader:v2
+          image: hugonaing/log-reader:v2.1
           imagePullPolicy: Always
           volumeMounts: 
             - name: shared-storage

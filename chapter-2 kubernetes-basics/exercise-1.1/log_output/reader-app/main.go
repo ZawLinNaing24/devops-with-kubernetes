@@ -7,9 +7,9 @@ import (
 	"os"
 	"fmt"
 	"strings"
+	"io"
 )
 
-const pingpongFilePath = "/usr/src/app/files/pingpong.txt";
 const logFilePath = "/usr/src/app/files/log.txt";
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,9 +24,22 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// ၂။ Ping-pong Count ဖိုင်ကို ဖတ်
 	pingCount := "0" // Ping-pong ဖိုင် မရှိသေးပါက (သို့) မဖတ်နိုင်ပါက Default '0' ဟု သတ်မှတ်မည်
-	pingData, err := os.ReadFile(pingpongFilePath)
+	
+	// Environment variable မရှိပါက Default 'http://pingpong-svc:8080/count' ကို သုံးမည်
+	pingPongURL := os.Getenv("PINGPONG_URL")
+	if pingPongURL == "" {
+		pingPongURL = "http://pingpong-svc:8080/count"
+	}
+	resp, err := http.Get(pingPongURL)
 	if err == nil {
-		pingCount = strings.TrimSpace(string(pingData))
+		defer resp.Body.Close()
+		body, readErr := io.ReadAll(resp.Body)
+		if readErr == nil {
+			pingCount = strings.TrimSpace(string(body))
+		}
+	} else {
+		// Ping Pong service ကို လှမ်းခေါ်လို့ မရပါက Log ထဲ အမှားရိုက်ပြမည် (Default '0' ပဲ ပြထားမည်)
+		log.Printf("Error fetching ping count from %s: %v", pingPongURL, err)
 	}
 
 	responseText := fmt.Sprintf("%s.\nPing / Pongs: %s\n", strings.TrimSpace(string(logData)), pingCount)
