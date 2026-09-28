@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: todo-app-dep
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: todo-app
@@ -13,9 +13,9 @@ spec:
         app: todo-app
     spec:
       volumes: 
-      - name: shared-storage
-        persistentVolumeClaim: 
-          claimName: shared-pv-claim
+        - name: shared-storage
+          persistentVolumeClaim: 
+            claimName: todo-pv-claim
       containers:
         - name: todo-app
           image: hugonaing/to-do-app:1.8
@@ -25,3 +25,7 @@ spec:
           env:
             - name: PORT
               value: "3000"
+          volumeMounts:
+            - name: shared-storage
+              mountPath: /usr/src/app/files
+          

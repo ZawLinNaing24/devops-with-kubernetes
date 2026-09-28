@@ -1,12 +1,14 @@
 package main
 
 import (
-"fmt"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	
 	"time"
 )
 const (
@@ -15,6 +17,17 @@ const (
 	imageURL  = "https://picsum.photos/1200"
 )
 
+type Todo struct {
+	ID   int    `json:"id"`
+	Text string `json:"text"`
+}
+
+func getBackendURL() string {
+	if url := os.Getenv("BACKEND_URL"); url != "" {
+		return url
+	}
+	return "http://todo-backend-svc:5000"
+}
 
 func fetchAndCacheImage() error {
 	_ = os.MkdirAll(imageDir, 0755)
@@ -57,40 +70,90 @@ func imageHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, imagePath)
 }
 
+const indexTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Todo App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; max-width: 600px; }
+        img { width: 100%; height: auto; border-radius: 8px; margin-bottom: 20px; }
+        input[type="text"] { width: 70%; padding: 8px; font-size: 14px; }
+        button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
+        ul { margin-top: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <h1>Todo App</h1>
+    <img src="/image.jpg" alt="Hourly Random Image" style="max-width: 600px; height: auto;" />
+    
+    <form action="/" method="POST">
+        <input type="text" name="todo" maxlength="140" placeholder="Enter a new todo (max 140 characters)..." required />
+        <button type="submit">Send</button>
+    </form>
+
+    <ul>
+        {{range .}}
+            <li>{{.Text}}</li>
+        {{else}}
+            <li>No todos available</li>
+        {{end}}
+    </ul>
+</body>
+</html>
+`;
+
 // Main HTML Page Handler (`/`)
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	html := `
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<meta charset="UTF-8">
-			<title>Todo App</title>
-			<style>
-				body { font-family: Arial, sans-serif; margin: 40px; max-width: 600px; }
-				img { width: 100%%; height: auto; border-radius: 8px; margin-bottom: 20px; }
-				input[type="text"] { width: 70%%; padding: 8px; font-size: 14px; }
-				button { padding: 8px 12px; font-size: 14px; cursor: pointer; }
-				ul { margin-top: 20px; line-height: 1.6; }
-			</style>
-		</head>
-		<body>
-			<h1>Todo App</h1>
-			<img src="/image.jpg" alt="Hourly Random Image" style="max-width: 600px; height: auto;" />
-			<form action="/" method="POST">
-				<input type="text" name="todo" maxlength="140" placeholder="Enter a new todo (max 140 characters)..." required />
-				<button type="submit">Send</button>
-			</form>
+	backendURL := getBackendURL()
 
-			<!-- Exercise 1.13: Hardcoded/Existing Todo List -->
-			<ul>
-				<li>Todo 1</li>
-				<li>Todo 2</li>
-   			</ul>
-		</body>
-		</html>
-	`
-	w.Write([]byte(html))
+	// ၁။ Form Submit (POST Method) ပြုလုပ်လိုက်ပါက Backend ဆီ Todo အသစ် လှမ်းပို့မည်
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Failed to parse form", http.StatusBadRequest)
+			return
+		}
+
+		todoText := r.FormValue("todo")
+		if todoText != "" {
+			newTodo := Todo{Text: todoText}
+			jsonData, _ := json.Marshal(newTodo)
+
+			// http://todo-backend-svc:5000/todos ဆီ POST Request ပို့ခြင်း
+			resp, err := http.Post(backendURL+"/todos", "application/json", bytes.NewBuffer(jsonData))
+			if err != nil {
+				log.Printf("Error posting todo to backend: %v", err)
+			} else {
+				resp.Body.Close()
+			}
+		}
+
+		// Form Resubmission မဖြစ်စေရန် GET "/" သို့ Redirect ပြန်လုပ်ခြင်း
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	// ၂။ GET Request ဖြစ်ပါက Backend မှ Todos စာရင်းကို Fetch လုပ်ယူမည်
+	resp, err := http.Get(backendURL + "/todos")
+	var todos []Todo
+
+	if err == nil {
+		defer resp.Body.Close()
+		_ = json.NewDecoder(resp.Body).Decode(&todos)
+	} else {
+		log.Printf("Error fetching todos from backend: %v", err)
+	}
+
+	// ၃။ Template ထဲ Todos ထည့်သွင်း၍ HTML Render လုပ်ခြင်း
+	tmpl, err := template.New("index").Parse(indexTemplate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html")
+	tmpl.Execute(w, todos)
 }
 
 func main() {

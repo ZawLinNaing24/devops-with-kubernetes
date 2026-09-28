@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend-dep
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      volumes:
+        - name: shared-storage
+          persistentVolumeClaim:
+            claimName: todo-pv-claim 
+      containers:
+        - name: todo-backend
+          image: hugonaing/todo-backend:v1.0
+          imagePullPolicy: Always
+          ports: 
+            - containerPort: 5000
+          env: 
+            - name: PORT 
+              value: "5000"
+          volumeMounts:
+            - name: shared-storage
+              mountPath: /usr/src/app/files
