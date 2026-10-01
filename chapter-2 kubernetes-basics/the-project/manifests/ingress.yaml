@@ -3,6 +3,7 @@ kind: Ingress
 metadata:
   creationTimestamp: null
   name: todo-app-ingress
+  namespace: project
 spec:
   ingressClassName: nginx
   rules:
