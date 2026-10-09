@@ -15,7 +15,12 @@ spec:
     spec:
       volumes: 
       - name: shared-storage
-        emptyDir: {}
+        persistentVolumeClaim:
+            claimName: shared-pv-claim
+      
+      - name: config-volume
+        configMap: 
+          name: log-output-config
       containers:
         - name: writer
           image: hugonaing/log-writer:v1
@@ -25,11 +30,22 @@ spec:
               mountPath: /usr/src/app/files
 
         - name: reader
-          image: hugonaing/log-reader:v2.1
+          image: hugonaing/log-reader:v2.5
           imagePullPolicy: Always
+          # Environment variable (MESSAGE) ထည့်သွင်းပါ
+          env:
+            - name: MESSAGE
+              valueFrom:
+                configMapKeyRef:
+                  name: log-output-config
+                  key: MESSAGE
           volumeMounts: 
             - name: shared-storage
               mountPath: /usr/src/app/files
+
+              # ConfigMap volume ကို /usr/src/app/config သို့ Mount လုပ်ပါ
+            - name: config-volume
+              mountPath: /usr/src/app/config
           ports: 
             - containerPort: 3000
 

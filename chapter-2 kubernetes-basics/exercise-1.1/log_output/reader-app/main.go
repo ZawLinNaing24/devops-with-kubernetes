@@ -11,6 +11,7 @@ import (
 )
 
 const logFilePath = "/usr/src/app/files/log.txt";
+const configFilePath = "/usr/src/app/config/information.txt"
 
 func statusHandler(w http.ResponseWriter, r *http.Request) {
 	// Writer ရေးနေတဲ့ Shared File ကို လှမ်းဖတ်မယ်
@@ -22,7 +23,20 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Log file not generated yet...", http.StatusNotFound)
 		return
 	}
-	// ၂။ Ping-pong Count ဖိုင်ကို ဖတ်
+
+	// ၂။ ConfigMap မွ Mounted File (information.txt) ကို ဖတ်ပါ
+	fileContentBytes, err := os.ReadFile(configFilePath)
+	fileText := ""
+	if err == nil {
+		fileText = strings.TrimSpace(string(fileContentBytes))
+	} else {
+		log.Printf("Error reading config file at %s: %v", configFilePath, err)
+	}
+
+	// ၃။ Environment Variable (MESSAGE) ကို ဖတ်ပါ
+	messageEnv := os.Getenv("MESSAGE")
+
+	// ၄။ Ping-pong Count ဖိုင်ကို ဖတ်
 	pingCount := "0" // Ping-pong ဖိုင် မရှိသေးပါက (သို့) မဖတ်နိုင်ပါက Default '0' ဟု သတ်မှတ်မည်
 	
 	// Environment variable မရှိပါက Default 'http://pingpong-svc:8080/count' ကို သုံးမည်
@@ -42,7 +56,13 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error fetching ping count from %s: %v", pingPongURL, err)
 	}
 
-	responseText := fmt.Sprintf("%s.\nPing / Pongs: %s\n", strings.TrimSpace(string(logData)), pingCount)
+	responseText := fmt.Sprintf(
+		"file content: %s\nenv variable: MESSAGE=%s\n%s.\nPing / Pongs: %s\n",
+		fileText,
+		messageEnv,
+		strings.TrimSpace(string(logData)),
+		pingCount,
+	)
 	// ဖတ်လို့ရတဲ့ စာကို Browser / curl ဆီ ပြန်ပို့မယ်
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
