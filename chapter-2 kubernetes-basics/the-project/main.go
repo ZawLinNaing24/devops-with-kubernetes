@@ -14,7 +14,6 @@ import (
 const (
 	imageDir  = "/usr/src/app/files"
 	imagePath = "/usr/src/app/files/image.jpg"
-	imageURL  = "https://picsum.photos/1200"
 )
 
 type Todo struct {
@@ -27,6 +26,13 @@ func getBackendURL() string {
 		return url
 	}
 	return "http://todo-backend-svc:5000"
+}
+
+func getImageURL() string {
+    if url := os.Getenv("IMAGE_URL"); url != "" {
+        return url
+    }
+    return "https://picsum.photos/1200" // Fallback default
 }
 
 func fetchAndCacheImage() error {
@@ -43,6 +49,7 @@ func fetchAndCacheImage() error {
 
 	// ၂။ ဖိုင်မရှိသေးပါက (သို့) ၁၀ မိနစ်ကျော်သွားပါက Picsum မှ ပုံအသစ် ဒေါင်းလုဒ်ဆွဲမည်
 	log.Println("Fetching a new image from Lorem Picsum...")
+	imageURL := getImageURL();
 	resp, err := http.Get(imageURL)
 	if err != nil {
 		return fmt.Errorf("failed to fetch image: %w", err)

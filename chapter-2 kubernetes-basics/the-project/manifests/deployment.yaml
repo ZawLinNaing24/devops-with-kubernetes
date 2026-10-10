@@ -23,9 +23,9 @@ spec:
           imagePullPolicy: Always
           ports: 
             - containerPort: 3000
-          env:
-            - name: PORT
-              value: "3000"
+          envFrom:
+            - configMapRef:
+                name: todo-config
           volumeMounts:
             - name: shared-storage
               mountPath: /usr/src/app/files
