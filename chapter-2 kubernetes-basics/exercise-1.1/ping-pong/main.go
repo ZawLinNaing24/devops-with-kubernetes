@@ -1,36 +1,100 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
+	"os"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// ၁။ Package-level မှာ Variable တွေ ကြေညာခြင်း
-var (
-	pongs int
-	mu    sync.Mutex
-)
-// ၂။ init() function ထဲမှာ ဖိုလ်ဒါဆောက်ခြင်းနဲ့ Path သတ်မှတ်ခြင်း
 func main() {
-	// မူလ Endpoint - Browser မှ ဝင်ကြည့်လျှင် Pong အရေအတွက် တိုးမည်
+	ctx := context.Background()
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		log.Println("Not Found Database URL")
+	}
+
+	var pool *pgxpool.Pool
+	var err error
+
+	// App-level Connection Retry Loop (pgxpool ဖြင့် Database ချိတ်ဆက်ရန် စောင့်ဆိုင်းခြင်း)
+	for {
+		pool, err = pgxpool.New(ctx, databaseURL)
+		if err == nil {
+			err = pool.Ping(ctx)
+			if err == nil {
+				log.Println("Connected to PostgreSQL successfully using pgxpool!")
+				break
+			}
+			pool.Close()
+		}
+
+		log.Println("waiting for PostgreSQL...")
+		time.Sleep(2 * time.Second)
+	}
+	defer pool.Close()
+
+	// ဇယားမရှိပါက ဖန်တီးခြင်း
+	_, err = pool.Exec(ctx, `
+		CREATE TABLE IF NOT EXISTS ping_pongs (
+			id INTEGER PRIMARY KEY,
+			count INTEGER NOT NULL
+		)
+	`)
+	if err != nil {
+		log.Fatalf("Failed to create table: %v", err)
+	}
+
+	// Initial row (id = 1, count = 0) ထည့်သွင်းခြင်း
+	_, err = pool.Exec(ctx, `
+		INSERT INTO ping_pongs (id, count)
+		VALUES (1, 0)
+		ON CONFLICT (id) DO NOTHING
+	`)
+	if err != nil {
+		log.Fatalf("Failed to initialize row: %v", err)
+	}
+
+	// 1. /pingpong Endpoint: Request ရောက်တိုင်း count ကို Database ထဲတွင် တိုးမည်
 	http.HandleFunc("/pingpong", func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		pongs++
-		currentPongs := pongs
-		mu.Unlock()
-		fmt.Fprintf(w, "pong %d", currentPongs)
+		var count int
+		err := pool.QueryRow(ctx, `
+			UPDATE ping_pongs
+			SET count = count + 1
+			WHERE id = 1
+			RETURNING count
+		`).Scan(&count)
+		if err != nil {
+			log.Printf("Database error on /pingpong: %v", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "pong %d", count)
 	})
 
-	// ✨ အသစ်ထည့်ရမည့် Endpoint - Log-output မှ အရေအတွက်ကိုသာ လှမ်းတောင်းမည်
+	// 2. /count Endpoint: Database ထဲရှိ လက်ရှိ count တန်ဖိုးကို ထုတ်ပေးမည်
 	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
-		mu.Lock()
-		currentPongs := pongs
-		mu.Unlock()
-		fmt.Fprintf(w, "%d", currentPongs)
+		var count int
+		err := pool.QueryRow(ctx, `
+			SELECT count FROM ping_pongs WHERE id = 1
+		`).Scan(&count)
+		if err != nil {
+			log.Printf("Database error on /count: %v", err)
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Fprintf(w, "%d", count)
 	})
 
 	log.Println("Ping-pong app listening on port 8080...")
-	http.ListenAndServe(":8080", nil) // Port ကို ကိုယ်လိုသလို ပြင်နိုင်သည်
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }

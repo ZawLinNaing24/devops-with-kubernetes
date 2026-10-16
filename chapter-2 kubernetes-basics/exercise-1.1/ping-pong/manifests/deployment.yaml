@@ -15,7 +15,13 @@ spec:
     spec:
       containers:
         - name: pingpong
-          image: hugonaing/ping-pong:v2.1
+          image: hugonaing/ping-pong:v2.7
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom: 
+                configMapKeyRef:
+                  name: ping-pong-config
+                  key: DATABASE_URL
