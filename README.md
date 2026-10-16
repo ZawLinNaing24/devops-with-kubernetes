@@ -26,3 +26,4 @@
 - [Exercise 2.4](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/2.4)
 - [Exercise 2.5](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/2.5)
 - [Exercise 2.6](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/2.6)
+- [Exercise 2.7](https://github.com/ZawLinNaing24/devops-with-kubernetes/tree/2.7)
