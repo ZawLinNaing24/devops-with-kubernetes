@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-backend-config
+  namespace: project
+data:
+  DATABASE_URL: postgresql://postgres:example@todo-postgres-svc:5432/postgres?sslmode=disable
+  PORT: "5000"

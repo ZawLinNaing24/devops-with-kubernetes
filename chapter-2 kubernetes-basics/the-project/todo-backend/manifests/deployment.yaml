@@ -19,13 +19,21 @@ spec:
             claimName: todo-pv-claim 
       containers:
         - name: todo-backend
-          image: hugonaing/todo-backend:v1.0
+          image: hugonaing/todo-backend:v2.8
           imagePullPolicy: Always
           ports: 
             - containerPort: 5000
           env: 
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-backend-config
+                  key: DATABASE_URL
             - name: PORT 
-              value: "5000"
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-backend-config
+                  key: PORT
           volumeMounts:
             - name: shared-storage
               mountPath: /usr/src/app/files
