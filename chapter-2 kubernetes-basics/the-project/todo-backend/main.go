@@ -97,6 +97,16 @@ func main() {
 				return
 			}
 
+			// 1. Request Logging - ဝင်လာတဲ့ Todo အားလုံးကို Log မှတ်မည်
+			log.Printf("INFO: Received todo request | Text: %s", newTodo.Text)
+
+			// 2. Character Limit Validation (140 characters ကန့်သတ်ချက်)
+			if len(newTodo.Text) > 140 {
+				log.Printf("WARNING: Todo rejected - exceeds 140 characters (Length: %d)", len(newTodo.Text))
+				http.Error(w, "Todo is too long (maximum 140 characters allowed)", http.StatusBadRequest)
+				return
+			}
+
 			query := `INSERT INTO todos (text) VALUES ($1) RETURNING id`
 			err := pool.QueryRow(ctx, query, newTodo.Text).Scan(&newTodo.ID)
 			if err != nil {

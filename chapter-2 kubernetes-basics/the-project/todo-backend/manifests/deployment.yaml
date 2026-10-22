@@ -19,7 +19,7 @@ spec:
             claimName: todo-pv-claim 
       containers:
         - name: todo-backend
-          image: hugonaing/todo-backend:v2.8
+          image: hugonaing/todo-backend:v2.10
           imagePullPolicy: Always
           ports: 
             - containerPort: 5000
