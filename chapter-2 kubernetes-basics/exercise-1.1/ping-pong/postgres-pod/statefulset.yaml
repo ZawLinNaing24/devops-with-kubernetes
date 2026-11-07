@@ -29,6 +29,7 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+              subPath: postgres
           readinessProbe:
             exec:
               command:
@@ -43,7 +44,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: hostpath
+        storageClassName: standard-rwo
         resources:
           requests:
             storage: 1Gi
