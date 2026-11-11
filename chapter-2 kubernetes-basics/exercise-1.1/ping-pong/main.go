@@ -60,6 +60,10 @@ func main() {
 		log.Fatalf("Failed to initialize row: %v", err)
 	}
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
 	// 1. /pingpong Endpoint: Request ရောက်တိုင်း count ကို Database ထဲတွင် တိုးမည်
 	http.HandleFunc("/pingpong", func(w http.ResponseWriter, r *http.Request) {
 		var count int

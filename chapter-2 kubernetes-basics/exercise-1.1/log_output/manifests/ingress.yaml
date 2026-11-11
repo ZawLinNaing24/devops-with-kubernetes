@@ -4,7 +4,7 @@ metadata:
   name: log-output-ingress
   namespace: exercises
 spec:
-  ingressClassName: nginx   # Docker Desktop ရှိ NGINX Ingress Controller အတွက်
+  ingressClassName: gce   # Docker Desktop ရှိ NGINX Ingress Controller အတွက်
   rules:
     - http:
         paths:
