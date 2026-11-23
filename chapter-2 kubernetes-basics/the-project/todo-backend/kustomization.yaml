@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - manifests/deployment.yaml
+  - manifests/service.yaml
+  - manifests/pvc.yaml
+  - postgres-pod/configmap.yaml
+  - postgres-pod/secret.yaml
+  - postgres-pod/service.yaml
+  - postgres-pod/statefulset.yaml
+
+
+
+
+images:
+  - name: HUGONAING/TODO-BACKEND          # <-- deployment.yaml ထဲက ယာယီနာမည်ကို ရှာမယ်
+    newName: hugonaing/todo-backend   # <-- ဒီ Image အစစ်နဲ့ အစားထိုးမယ်
+    newTag: v2.10

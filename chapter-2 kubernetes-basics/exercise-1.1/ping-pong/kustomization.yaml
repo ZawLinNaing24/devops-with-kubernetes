@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  # All manifests for the log-output application (Deployment, Service, ConfigMap, Ingress, etc.)
+  - manifests/deployment.yaml
+  - manifests/service.yaml
+  - postgres-pod/configmap.yaml
+  - postgres-pod/sercret.yaml
+  - postgres-pod/service.yaml
+  - postgres-pod/statefulset.yaml
+
+
+images:
+  - name: HUGONAING/PING-PONG
+    newName: hugonaing/ping-pong
+    newTag: v3.2
+
+
+# Apply a label to all resources while keeping original selectors untouched
+labels:
+  - pairs:
+      app: ping-pong-kustomize
+    includeSelectors: false

@@ -19,7 +19,7 @@ spec:
             claimName: todo-pv-claim
       containers:
         - name: todo-app
-          image: hugonaing/to-do-app:1.8
+          image: HUGONAING/TODO-APP
           imagePullPolicy: Always
           ports: 
             - containerPort: 3000
